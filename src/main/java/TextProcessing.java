@@ -7,18 +7,73 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class TextProcessing {
 
-    private static final int BATCH_SIZE = 1000000;
+    private static final int BATCH_SIZE = 100000;
     private static final int ALPHABET_SIZE = 65536;
+    private static int batchCount = 0;
 
     public static void main(String[] args) {
         readFileAndProcess("src/main/resources/fileText.txt");
+
+//        while (true) {
+            String pattern = "aab";
+            int index = searchPattern(pattern); // TODO
+            System.out.println(index);
+//        }
+    }
+
+    public static int searchPattern(String pattern) {
+        int index = -1;
+
+        for (int i = 0; i < batchCount; i++) {
+            String textFileName = String.format("%s_text", i);
+            String arrayFileName = String.format("%s_array", i);
+
+            Path textPath = Paths.get(textFileName);
+            Path arrayPath = Paths.get(arrayFileName);
+
+            try (BufferedReader textReader = Files.newBufferedReader(textPath);
+                 BufferedReader arrayReader = Files.newBufferedReader(arrayPath)) {
+
+                String batch = textReader.readLine();
+                String suffArray = arrayReader.readLine();
+
+                List<Integer> array = Arrays.stream(suffArray.split(" "))
+                        .map(Integer::parseInt)
+                        .collect(Collectors.toList());
+
+                index = findInArray(pattern, batch, array);
+            } catch (IOException ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+        return index;
+    }
+
+    public static int findInArray(String pattern, String batch, List<Integer> suffArray) {
+        TextComparator comparator = new TextComparator(batch, pattern);
+        int index = Collections.binarySearch(suffArray, pattern.length(), comparator);
+        return index < 0 ? -1 : suffArray.get(index);
+    }
+
+    static class TextComparator implements Comparator<Integer> {
+        private String text;
+        private String pattern;
+
+        public TextComparator(String text, String pattern) {
+            this.text = text;
+            this.pattern = pattern;
+        }
+
+        @Override
+        public int compare(Integer o1, Integer o2) {
+            return StringUtils.compare(text.substring(o1, o1 + o2), pattern);
+        }
     }
 
     public static void readFileAndProcess(String fileName)  {
@@ -41,6 +96,7 @@ public class TextProcessing {
 
                     batchBuilder.setLength(0);
                     batchNumber++;
+                    batchCount = batchNumber;
                     size = 0;
                 }
             }
@@ -49,6 +105,7 @@ public class TextProcessing {
                 String batch = batchBuilder.toString();
                 List<Integer> processedBatch = processBatch(batch);
                 sinkBatch(batchNumber, batch, processedBatch);
+                batchCount++;
             }
 
         } catch (IOException ex) {
@@ -67,9 +124,8 @@ public class TextProcessing {
     public static void writeToFile(String data, String fileName) {
         Path path = Paths.get(fileName);
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             writer.write(data);
-            writer.close();
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
