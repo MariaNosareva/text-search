@@ -19,12 +19,16 @@ public class TextProcessing {
 
     private static final String TEXT_FILENAME_PATTERN = "/tmp/%s_text";
     private static final String ARRAY_FILENAME_PATTERN = "/tmp/%s_array";
-    private static final String INITIAL_FILE = "/tmp/fileText.txt";
 
     public static void main(String[] args) {
-        readFileAndProcess(INITIAL_FILE);
-
         Scanner scanner = new Scanner(System.in);
+        System.out.println("Print your file path:");
+        String path = scanner.next();
+
+        System.out.println("Processing file...");
+        readFileAndProcess(path);
+        System.out.println("Processing finished!");
+
         System.out.println("Input a pattern: ");
         while (true) {
             String pattern = scanner.next();
