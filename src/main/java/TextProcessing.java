@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,6 +17,7 @@ public class TextProcessing {
     private static final int BATCH_SIZE = 100000;
     private static final int ALPHABET_SIZE = 65536;
     private static int batchCount = 0;
+    private static ArrayList<BigInteger> batchSizes = new ArrayList<>(Collections.nCopies(1, BigInteger.valueOf(0)));
 
     public static void main(String[] args) {
         readFileAndProcess("src/main/resources/fileText.txt");
@@ -29,14 +31,13 @@ public class TextProcessing {
                 break;
             }
 
-            int index = searchPattern(pattern);
-            System.out.println(String.format("position: %s", index >= 0 ? index : "not found"));
+            BigInteger index = searchPattern(pattern);
+            System.out.println(String.format("position: %s", index.signum() >= 0 ? index : "not found"));
             System.out.println("And another one: ");
         }
     }
 
-    public static int searchPattern(String pattern) {
-        int index = -1;
+    public static BigInteger searchPattern(String pattern) {
 
         for (int i = 0; i < batchCount; i++) {
             String textFileName = String.format("%s_text", i);
@@ -55,12 +56,15 @@ public class TextProcessing {
                         .map(Integer::parseInt)
                         .collect(Collectors.toList());
 
-                index = findInArray(pattern, batch, array);
+                int index = findInArray(pattern, batch, array);
+                if (index >= 0) {
+                    return batchSizes.get(i).add(BigInteger.valueOf(index));
+                }
             } catch (IOException ex) {
                 System.out.println(ex.getMessage());
             }
         }
-        return index;
+        return BigInteger.valueOf(-1);
     }
 
     public static int findInArray(String pattern, String batch, List<Integer> suffArray) {
@@ -91,28 +95,32 @@ public class TextProcessing {
             String line;
             int size = 0;
             int batchNumber = 0;
-            StringBuilder batchBuilder = new StringBuilder();
+            StringBuilder firstBatchBuilder = new StringBuilder();
+
 
             while ((line = reader.readLine()) != null) {
                 size++;
-                batchBuilder.append(line);
+                firstBatchBuilder.append(line);
 
                 if (size == BATCH_SIZE) {
-                    String batch = batchBuilder.toString();
+                    String batch = firstBatchBuilder.toString();
                     List<Integer> processedBatch = processBatch(batch);
                     sinkBatch(batchNumber, batch, processedBatch);
 
-                    batchBuilder.setLength(0);
+                    batchSizes.add(BigInteger.valueOf(batch.length()).add(batchSizes.get(batchSizes.size() - 1)));
+                    firstBatchBuilder.setLength(0);
                     batchNumber++;
                     batchCount = batchNumber;
                     size = 0;
                 }
             }
 
-            if (batchBuilder.length() > 0) {
-                String batch = batchBuilder.toString();
+
+            if (firstBatchBuilder.length() > 0) {
+                String batch = firstBatchBuilder.toString();
                 List<Integer> processedBatch = processBatch(batch);
                 sinkBatch(batchNumber, batch, processedBatch);
+                batchSizes.add(BigInteger.valueOf(batch.length()).add(batchSizes.get(batchSizes.size() - 1)));
                 batchCount++;
             }
 
