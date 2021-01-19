@@ -2,14 +2,12 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class TextProcessing {
@@ -19,8 +17,12 @@ public class TextProcessing {
     private static int batchCount = 0;
     private static ArrayList<BigInteger> batchSizes = new ArrayList<>(Collections.nCopies(1, BigInteger.valueOf(0)));
 
+    private static final String TEXT_FILENAME_PATTERN = "/tmp/%s_text";
+    private static final String ARRAY_FILENAME_PATTERN = "/tmp/%s_array";
+    private static final String INITIAL_FILE = "/tmp/fileText.txt";
+
     public static void main(String[] args) {
-        readFileAndProcess("src/main/resources/fileText.txt");
+        readFileAndProcess(INITIAL_FILE);
 
         Scanner scanner = new Scanner(System.in);
         System.out.println("Input a pattern: ");
@@ -40,8 +42,8 @@ public class TextProcessing {
     public static BigInteger searchPattern(String pattern) {
 
         for (int i = 0; i < batchCount; i++) {
-            String textFileName = String.format("%s_text", i);
-            String arrayFileName = String.format("%s_array", i);
+            String textFileName = String.format(TEXT_FILENAME_PATTERN, i);
+            String arrayFileName = String.format(ARRAY_FILENAME_PATTERN, i);
 
             Path textPath = Paths.get(textFileName);
             Path arrayPath = Paths.get(arrayFileName);
@@ -136,8 +138,8 @@ public class TextProcessing {
     }
 
     public static void sinkBatch(int batchNumber, String batch, List<Integer> processedBatch) {
-        String pathText = String.format("%s_text", batchNumber);
-        String pathArray = String.format("%s_array", batchNumber);
+        String pathText = String.format(TEXT_FILENAME_PATTERN, batchNumber);
+        String pathArray = String.format(ARRAY_FILENAME_PATTERN, batchNumber);
 
         writeToFile(batch, pathText);
         writeToFile(StringUtils.join(processedBatch, " "), pathArray);
