@@ -43,6 +43,10 @@ public class TextProcessing {
         }
     }
 
+    //==========================================================================================
+    //      SEARCH PART
+    //==========================================================================================
+
     public static BigInteger searchPattern(String pattern) {
 
         for (int i = 0; i < batchCount; i++) {
@@ -93,6 +97,10 @@ public class TextProcessing {
             return StringUtils.compare(text.substring(o1, Math.min(o1 + o2, text.length())), pattern);
         }
     }
+
+    //==========================================================================================
+    //      PROCESSING PART
+    //==========================================================================================
 
     public static void readFileAndProcess(String fileName)  {
         Path path = Paths.get(fileName);
