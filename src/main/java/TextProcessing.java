@@ -20,11 +20,19 @@ public class TextProcessing {
     public static void main(String[] args) {
         readFileAndProcess("src/main/resources/fileText.txt");
 
-//        while (true) {
-            String pattern = "aab";
-            int index = searchPattern(pattern); // TODO
-            System.out.println(index);
-//        }
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Input a pattern: ");
+        while (true) {
+            String pattern = scanner.next();
+            if (pattern.equals(":q!")) {
+                System.out.println("Bye :)");
+                break;
+            }
+
+            int index = searchPattern(pattern);
+            System.out.println(String.format("position: %s", index >= 0 ? index : "not found"));
+            System.out.println("And another one: ");
+        }
     }
 
     public static int searchPattern(String pattern) {
@@ -72,7 +80,7 @@ public class TextProcessing {
 
         @Override
         public int compare(Integer o1, Integer o2) {
-            return StringUtils.compare(text.substring(o1, o1 + o2), pattern);
+            return StringUtils.compare(text.substring(o1, Math.min(o1 + o2, text.length())), pattern);
         }
     }
 
