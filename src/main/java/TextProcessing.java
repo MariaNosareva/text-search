@@ -95,38 +95,44 @@ public class TextProcessing {
             String line;
             int size = 0;
             int batchNumber = 0;
-            StringBuilder firstBatchBuilder = new StringBuilder();
-
+            StringBuilder newBatchBuilder = new StringBuilder();
+            StringBuilder oldBatchBuilder = new StringBuilder();
 
             while ((line = reader.readLine()) != null) {
                 size++;
-                firstBatchBuilder.append(line);
+                newBatchBuilder.append(line);
 
-                if (size == BATCH_SIZE) {
-                    String batch = firstBatchBuilder.toString();
-                    List<Integer> processedBatch = processBatch(batch);
-                    sinkBatch(batchNumber, batch, processedBatch);
+                if (size == BATCH_SIZE / 2) {
+                    if (oldBatchBuilder.length() > 0) {
+                        process(oldBatchBuilder.toString() + newBatchBuilder.toString(), batchNumber);
+                    }
 
-                    batchSizes.add(BigInteger.valueOf(batch.length()).add(batchSizes.get(batchSizes.size() - 1)));
-                    firstBatchBuilder.setLength(0);
+                    batchSizes.add(BigInteger.valueOf(newBatchBuilder.length()).add(batchSizes.get(batchSizes.size() - 1)));
                     batchNumber++;
                     batchCount = batchNumber;
+                    oldBatchBuilder = new StringBuilder(newBatchBuilder);
+                    newBatchBuilder.setLength(0);
                     size = 0;
                 }
             }
 
-
-            if (firstBatchBuilder.length() > 0) {
-                String batch = firstBatchBuilder.toString();
-                List<Integer> processedBatch = processBatch(batch);
-                sinkBatch(batchNumber, batch, processedBatch);
-                batchSizes.add(BigInteger.valueOf(batch.length()).add(batchSizes.get(batchSizes.size() - 1)));
+            if (newBatchBuilder.length() > 0) {
+                if (oldBatchBuilder.length() > 0) {
+                    process(oldBatchBuilder.toString() + newBatchBuilder.toString(), batchNumber);
+                } else {
+                    process(newBatchBuilder.toString(), batchNumber);
+                }
                 batchCount++;
             }
 
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
+    }
+
+    public static void process(String batch, int batchNumber) {
+        List<Integer> processedBatch = processBatch(batch);
+        sinkBatch(batchNumber, batch, processedBatch);
     }
 
     public static void sinkBatch(int batchNumber, String batch, List<Integer> processedBatch) {
